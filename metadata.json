@@ -1,0 +1,8 @@
+{
+  "name": "Copy of LIMA - Learning Intelligent Market Agro-advisor",
+  "description": "A comprehensive AI assistant for Kenyan smallholder farmers featuring market price forecasting, an expert agronomy chatbot, and a real-time voice-based business advisor.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

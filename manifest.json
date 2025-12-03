@@ -1,0 +1,15 @@
+{
+  "name": "LIMA - Learning Intelligent Market Agro-advisor",
+  "short_name": "LIMA",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f5f5f4",
+  "theme_color": "#047857",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
