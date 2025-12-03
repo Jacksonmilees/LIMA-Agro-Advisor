@@ -264,9 +264,10 @@ const App: React.FC = () => {
   };
 
   const tourSteps: TourStep[] = [
-      { targetId: 'mobile-nav', title: 'Navigation', content: 'Use this bar to switch between Dashboard, Market, Journal and more.', position: 'top' },
-      { targetId: 'mobile-notif-btn', title: 'Notifications', content: 'See alerts about your farm and weather here.', position: 'bottom' },
+      { targetId: 'main-navigation', title: 'Navigation', content: 'Use this navigation to switch between Dashboard, Market, Climate Intelligence, and more.', position: 'bottom' },
+      { targetId: 'notification-button', title: 'Notifications', content: 'Stay updated with alerts about your farm, weather, and market prices.', position: 'bottom' },
   ];
+
 
   // --- RENDER ROOT ---
 

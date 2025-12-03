@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { TrendingUp, TrendingDown, Minus, MapPin, Sprout, Calculator, Truck, Scale, ArrowRight, Bell, BellRing, X, Plus, Navigation, RefreshCw, Share2, Copy } from 'lucide-react';
-import { generateMarketForecast, generateMarketComparison } from '../services/geminiService';
-import { MarketAnalysis, CropType, MarketComparisonItem, Language } from '../types';
+import { Bell, BellRing, Calculator, MapPin, Minus, Navigation, Plus, RefreshCw, Scale, Share2, Sprout, TrendingDown, TrendingUp, Truck, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { generateMarketComparison, generateMarketForecast } from '../services/geminiService';
+import { CropType, Language, MarketAnalysis, MarketComparisonItem } from '../types';
 
 interface MarketForecastProps {
     defaultLocation: string;
@@ -13,68 +13,68 @@ interface MarketForecastProps {
 
 // Skeleton Component
 const Skeleton = ({ className }: { className: string }) => (
-  <div className={`bg-stone-200/70 animate-pulse rounded-2xl ${className}`}></div>
+    <div className={`bg-stone-200/70 animate-pulse rounded-2xl ${className}`}></div>
 );
 
 const MarketForecast: React.FC<MarketForecastProps> = ({ defaultLocation, language, showToast }) => {
-  const [activeTab, setActiveTab] = useState<'forecast' | 'compare'>('forecast');
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<MarketAnalysis | null>(null);
-  const [comparisonData, setComparisonData] = useState<MarketComparisonItem[]>([]);
-  
-  const [selectedCrop, setSelectedCrop] = useState<CropType>(CropType.MAIZE);
-  const [location, setLocation] = useState<string>(defaultLocation || "Nakuru");
-  
-  // Profit Calculator State
-  const [harvestAmount, setHarvestAmount] = useState<string>('');
-  const [showCalculator, setShowCalculator] = useState(true);
+    const [activeTab, setActiveTab] = useState<'forecast' | 'compare'>('forecast');
+    const [loading, setLoading] = useState(false);
+    const [data, setData] = useState<MarketAnalysis | null>(null);
+    const [comparisonData, setComparisonData] = useState<MarketComparisonItem[]>([]);
 
-  // Alert State
-  const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alerts, setAlerts] = useState<{id: string, crop: string, price: number}[]>([]);
-  const [newAlertPrice, setNewAlertPrice] = useState('');
+    const [selectedCrop, setSelectedCrop] = useState<CropType>(CropType.MAIZE);
+    const [location, setLocation] = useState<string>(defaultLocation || "Nakuru");
 
-  useEffect(() => {
-      if (defaultLocation) setLocation(defaultLocation);
-  }, [defaultLocation]);
+    // Profit Calculator State
+    const [harvestAmount, setHarvestAmount] = useState<string>('');
+    const [showCalculator, setShowCalculator] = useState(true);
 
-  const fetchData = async (force: boolean = false) => {
-    setLoading(true);
-    try {
-      if (activeTab === 'forecast') {
-        const result = await generateMarketForecast(selectedCrop, location, language, force);
-        setData(result);
-        if(force) showToast("Market forecast updated", "success");
-      } else {
-        const result = await generateMarketComparison(selectedCrop, location, language, force);
-        setComparisonData(result);
-        if(force) showToast("Market prices compared", "success");
-      }
-    } catch (error) {
-      console.error(error);
-      showToast("Failed to fetch market data", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Alert State
+    const [showAlertModal, setShowAlertModal] = useState(false);
+    const [alerts, setAlerts] = useState<{ id: string, crop: string, price: number }[]>([]);
+    const [newAlertPrice, setNewAlertPrice] = useState('');
 
-  useEffect(() => {
-    fetchData(); // Use cached by default
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, selectedCrop, language]);
+    useEffect(() => {
+        if (defaultLocation) setLocation(defaultLocation);
+    }, [defaultLocation]);
 
-  const handleRefresh = () => {
-      fetchData(true);
-  };
+    const fetchData = async (force: boolean = false) => {
+        setLoading(true);
+        try {
+            if (activeTab === 'forecast') {
+                const result = await generateMarketForecast(selectedCrop, location, language, force);
+                setData(result);
+                if (force) showToast("Market forecast updated", "success");
+            } else {
+                const result = await generateMarketComparison(selectedCrop, location, language, force);
+                setComparisonData(result);
+                if (force) showToast("Market prices compared", "success");
+            }
+        } catch (error) {
+            console.error(error);
+            showToast("Failed to fetch market data", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const calculateProfit = () => {
-      if (!data || !harvestAmount) return 0;
-      return parseInt(harvestAmount) * data.currentPrice;
-  };
+    useEffect(() => {
+        fetchData(); // Use cached by default
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, selectedCrop, language]);
 
-  const handleShareReport = () => {
-      if(!data) return;
-      const report = `
+    const handleRefresh = () => {
+        fetchData(true);
+    };
+
+    const calculateProfit = () => {
+        if (!data || !harvestAmount) return 0;
+        return parseInt(harvestAmount) * data.currentPrice;
+    };
+
+    const handleShareReport = () => {
+        if (!data) return;
+        const report = `
 📊 *LIMA Farm Report*
 🌱 Crop: ${selectedCrop}
 📍 Location: ${location}
@@ -85,381 +85,430 @@ const MarketForecast: React.FC<MarketForecastProps> = ({ defaultLocation, langua
 
 _Generated by LIMA - Intelligent Farming Assistant_
       `.trim();
-      navigator.clipboard.writeText(report);
-      showToast("Report copied to clipboard!", "success");
-  };
+        navigator.clipboard.writeText(report);
+        showToast("Report copied to clipboard!", "success");
+    };
 
-  const handleAddAlert = () => {
-      if (!newAlertPrice) return;
-      setAlerts(prev => [...prev, {
-          id: Date.now().toString(),
-          crop: selectedCrop,
-          price: parseInt(newAlertPrice)
-      }]);
-      setNewAlertPrice('');
-      showToast("Price alert set successfully", "success");
-  };
+    const handleAddAlert = () => {
+        if (!newAlertPrice) return;
+        setAlerts(prev => [...prev, {
+            id: Date.now().toString(),
+            crop: selectedCrop,
+            price: parseInt(newAlertPrice)
+        }]);
+        setNewAlertPrice('');
+        showToast("Price alert set successfully", "success");
+    };
 
-  const removeAlert = (id: string) => {
-      setAlerts(prev => prev.filter(a => a.id !== id));
-      showToast("Alert removed", "info");
-  };
+    const removeAlert = (id: string) => {
+        setAlerts(prev => prev.filter(a => a.id !== id));
+        showToast("Alert removed", "info");
+    };
 
-  const chartData = data?.data.map(d => ({
-      ...d,
-      range: d.minPrice && d.maxPrice ? [d.minPrice, d.maxPrice] : null,
-      price: d.price 
-  }));
+    const chartData = data?.data.map(d => ({
+        ...d,
+        range: d.minPrice && d.maxPrice ? [d.minPrice, d.maxPrice] : null,
+        price: d.price
+    }));
 
-  return (
-    <div className="flex flex-col h-full bg-transparent pb-32 md:pb-10 relative">
-      {/* Header Controls - Glass */}
-      <div className="bg-white/80 backdrop-blur-md p-4 md:p-6 shadow-sm sticky top-0 z-20 border-b border-white/40">
-        <div className="max-w-5xl mx-auto w-full">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
-                <h2 className="text-xl md:text-2xl font-bold text-emerald-900 flex items-center">
-                    <TrendingUp className="mr-3 text-emerald-600" /> {language === 'sw' ? 'Bei za Soko' : 'Market Intelligence'}
-                </h2>
-                
-                {/* Tabs */}
-                <div className="flex bg-stone-100/80 p-1 rounded-xl">
-                    <button 
-                        onClick={() => setActiveTab('forecast')}
-                        className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all ${activeTab === 'forecast' ? 'bg-white shadow text-emerald-800' : 'text-stone-500 hover:text-stone-700'}`}
-                    >
-                        {language === 'sw' ? 'Utabiri wa Bei' : 'Price Forecast'}
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('compare')}
-                        className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all flex items-center justify-center ${activeTab === 'compare' ? 'bg-white shadow text-emerald-800' : 'text-stone-500 hover:text-stone-700'}`}
-                    >
-                        <Scale className="w-4 h-4 mr-2" /> {language === 'sw' ? 'Linganisha' : 'Compare'}
-                    </button>
-                </div>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-            <div className="col-span-1">
-                <label className="block text-[10px] md:text-xs font-bold text-stone-500 mb-1 tracking-wide">CROP</label>
-                <div className="relative">
-                <Sprout className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
-                <select 
-                    value={selectedCrop}
-                    onChange={(e) => setSelectedCrop(e.target.value as CropType)}
-                    className="w-full pl-9 md:pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl bg-white/50 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm appearance-none shadow-sm outline-none"
-                >
-                    {Object.values(CropType).map((crop) => (
-                    <option key={crop} value={crop}>{crop}</option>
-                    ))}
-                </select>
-                </div>
-            </div>
-            <div className="col-span-1">
-                <label className="block text-[10px] md:text-xs font-bold text-stone-500 mb-1 tracking-wide">LOCATION</label>
-                <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
-                <input 
-                    type="text" 
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full pl-9 md:pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl bg-white/50 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm shadow-sm outline-none"
-                />
-                </div>
-            </div>
-            <div className="col-span-2 md:col-span-1 flex items-end">
-                <button 
-                onClick={handleRefresh}
-                disabled={loading}
-                className="w-full bg-emerald-700 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-800 transition-all shadow-md active:scale-[0.98] flex justify-center items-center text-sm"
-                >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Refreshing...' : (language === 'sw' ? 'Onyesha Utabiri' : "Refresh Data")}
-                </button>
-            </div>
-            </div>
-        </div>
-      </div>
+    return (
+        <div className="flex flex-col h-full bg-transparent pb-32 md:pb-10 relative">
+            {/* Header Controls - Glass */}
+            <div className="bg-white/80 backdrop-blur-md p-4 md:p-6 shadow-sm sticky top-0 z-20 border-b border-white/40">
+                <div className="max-w-5xl mx-auto w-full">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6 gap-4">
+                        <h2 className="text-xl md:text-2xl font-bold text-emerald-900 flex items-center">
+                            <TrendingUp className="mr-3 text-emerald-600" /> {language === 'sw' ? 'Bei za Soko' : 'Market Intelligence'}
+                        </h2>
 
-      {/* Content */}
-      <div className="p-4 md:p-8 flex-1 max-w-5xl mx-auto w-full space-y-6">
-        {loading && !data && activeTab === 'forecast' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="space-y-6">
-                 <Skeleton className="h-64 w-full" />
-                 <Skeleton className="h-32 w-full" />
-                 <Skeleton className="h-40 w-full" />
-             </div>
-             <Skeleton className="h-[400px] w-full" />
-          </div>
-        ) : loading && comparisonData.length === 0 && activeTab === 'compare' ? (
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                 <Skeleton className="h-48 w-full" />
-                 <Skeleton className="h-48 w-full" />
-                 <Skeleton className="h-48 w-full" />
-             </div>
-        ) : activeTab === 'forecast' && data ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Left Column: Stats & Advice */}
-            <div className="space-y-6">
-                {/* Recommendation Card */}
-                <div className={`p-6 md:p-8 rounded-[2rem] shadow-xl text-white relative overflow-hidden ${
-                data.recommendation === 'SELL' ? 'bg-gradient-to-br from-emerald-700 to-teal-600' :
-                data.recommendation === 'HOLD' ? 'bg-gradient-to-br from-amber-600 to-orange-500' :
-                'bg-gradient-to-br from-blue-700 to-indigo-600'
-                }`}>
-                    <div className="relative z-10">
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="text-xs opacity-80 font-bold uppercase tracking-widest border border-white/20 px-2 py-1 rounded">AI Strategy</span>
-                            {data.recommendation === 'SELL' ? <TrendingUp className="h-6 w-6" /> :
-                            data.recommendation === 'HOLD' ? <Minus className="h-6 w-6" /> :
-                            <TrendingDown className="h-6 w-6" />}
+                        {/* Tabs */}
+                        <div className="flex bg-stone-100/80 p-1 rounded-xl">
+                            <button
+                                onClick={() => setActiveTab('forecast')}
+                                className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all ${activeTab === 'forecast' ? 'bg-white shadow text-emerald-800' : 'text-stone-500 hover:text-stone-700'}`}
+                            >
+                                {language === 'sw' ? 'Utabiri wa Bei' : 'Price Forecast'}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('compare')}
+                                className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all flex items-center justify-center ${activeTab === 'compare' ? 'bg-white shadow text-emerald-800' : 'text-stone-500 hover:text-stone-700'}`}
+                            >
+                                <Scale className="w-4 h-4 mr-2" /> {language === 'sw' ? 'Linganisha' : 'Compare'}
+                            </button>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">{data.recommendation}</h1>
-                        <p className="text-white/90 text-sm leading-relaxed border-t border-white/20 pt-4">
-                            {data.reasoning}
-                        </p>
-                        
-                        <button 
-                            onClick={handleShareReport}
-                            className="mt-4 flex items-center bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors border border-white/30"
-                        >
-                            <Share2 className="w-4 h-4 mr-2" /> Share Report
-                        </button>
                     </div>
-                </div>
 
-                {/* Price Stats */}
-                <div className="bg-white/70 backdrop-blur-md p-6 rounded-[2rem] shadow-lg border border-white/50 flex justify-between items-center relative">
-                    <div>
-                        <p className="text-stone-500 text-xs font-bold uppercase tracking-wider">Current Market Price</p>
-                        <p className="text-3xl font-bold text-stone-800 mt-1">
-                        {data.currency} {data.currentPrice}
-                        <span className="text-sm font-normal text-stone-500 ml-1">/ kg</span>
-                        </p>
-                    </div>
-                    
-                    <button 
-                        onClick={() => setShowAlertModal(true)}
-                        className={`absolute top-4 right-4 p-2 rounded-full transition-all ${
-                            alerts.some(a => a.crop === selectedCrop) ? 'bg-emerald-100 text-emerald-600' : 'text-stone-400 hover:bg-stone-100'
-                        }`}
-                        title="Set Price Alert"
-                    >
-                        {alerts.some(a => a.crop === selectedCrop) ? <BellRing className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
-                    </button>
-
-                    <div className="text-right">
-                        <p className="text-stone-500 text-xs font-bold uppercase tracking-wider">Trend</p>
-                        <p className={`font-bold text-lg mt-1 ${
-                        data.recommendation === 'SELL' ? 'text-emerald-600' : 'text-amber-600'
-                        }`}>
-                        {data.recommendation === 'SELL' ? 'High' : 'Stable'}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Profit Calculator */}
-                <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-[2rem] shadow-lg overflow-hidden">
-                    <div className="bg-stone-50/50 p-4 border-b border-stone-100 flex justify-between items-center cursor-pointer" onClick={() => setShowCalculator(!showCalculator)}>
-                         <h3 className="font-bold text-stone-700 flex items-center"><Calculator className="w-4 h-4 mr-2 text-emerald-600"/> Revenue Estimator</h3>
-                         <span className="text-xs text-stone-500">{showCalculator ? "Collapse" : "Expand"}</span>
-                    </div>
-                    
-                    {showCalculator && (
-                        <div className="p-4">
-                            <label className="block text-xs font-medium text-stone-500 mb-2">Expected Harvest Volume</label>
-                            <div className="flex gap-4 mb-4">
-                                <input 
-                                    type="number" 
-                                    placeholder="Amount in KG"
-                                    value={harvestAmount}
-                                    onChange={(e) => setHarvestAmount(e.target.value)}
-                                    className="flex-1 border border-stone-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white/50"
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                        <div className="col-span-1">
+                            <label className="block text-[10px] md:text-xs font-bold text-stone-500 mb-1 tracking-wide">CROP</label>
+                            <div className="relative">
+                                <Sprout className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
+                                <select
+                                    value={selectedCrop}
+                                    onChange={(e) => setSelectedCrop(e.target.value as CropType)}
+                                    className="w-full pl-9 md:pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl bg-white/50 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm text-stone-800 font-medium appearance-none shadow-sm outline-none"
+                                >
+                                    {Object.values(CropType).map((crop) => (
+                                        <option key={crop} value={crop} className="text-stone-800 bg-white">{crop}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="col-span-1">
+                            <label className="block text-[10px] md:text-xs font-bold text-stone-500 mb-1 tracking-wide">LOCATION</label>
+                            <div className="relative">
+                                <MapPin className="absolute left-3 top-3 h-4 w-4 text-stone-400" />
+                                <input
+                                    type="text"
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
+                                    className="w-full pl-9 md:pl-10 pr-4 py-2.5 border border-stone-200 rounded-xl bg-white/50 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm text-stone-800 font-medium shadow-sm outline-none"
                                 />
-                                <div className="bg-stone-100/50 px-4 flex items-center border border-stone-200 rounded-xl text-sm font-medium text-stone-600">KG</div>
-                            </div>
-                            
-                            <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex justify-between items-center">
-                                <span className="text-sm text-emerald-800 font-medium">Estimated Gross Revenue:</span>
-                                <span className="font-bold text-emerald-700 text-xl">
-                                    {data.currency} {calculateProfit().toLocaleString()}
-                                </span>
                             </div>
                         </div>
-                    )}
+                        <div className="col-span-2 md:col-span-1 flex items-end">
+                            <button
+                                onClick={handleRefresh}
+                                disabled={loading}
+                                className="w-full bg-emerald-700 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-800 transition-all shadow-md active:scale-[0.98] flex justify-center items-center text-sm"
+                            >
+                                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                                {loading ? 'Refreshing...' : (language === 'sw' ? 'Onyesha Utabiri' : "Refresh Data")}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Right Column: Chart */}
-            <div className="bg-white/70 backdrop-blur-md p-6 rounded-[2rem] shadow-lg border border-white/50 flex flex-col h-[400px] md:h-auto">
-              <h3 className="text-sm font-bold text-stone-700 mb-6 uppercase tracking-wider flex items-center justify-between">
-                  <span>Price Trend</span>
-                  <span className="text-xs font-normal text-stone-400 normal-case flex items-center gap-2">
-                    <span className="w-2 h-2 bg-emerald-200 block rounded-full"></span> 95% Conf.
-                  </span>
-              </h3>
-              <div className="flex-1 w-full min-h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-                    <XAxis 
-                        dataKey="month" 
-                        tick={{fontSize: 10, fill: '#78716c'}} 
-                        axisLine={false}
-                        tickLine={false}
-                        dy={10}
-                        interval="preserveStartEnd"
-                    />
-                    <YAxis 
-                        tick={{fontSize: 10, fill: '#78716c'}} 
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(value) => `${value}`}
-                        width={40}
-                    />
-                    <Tooltip 
-                        contentStyle={{
-                            borderRadius: '16px', 
-                            border: 'none', 
-                            boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.15)',
-                            fontFamily: 'sans-serif',
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            fontSize: '12px'
-                        }}
-                    />
-                    <ReferenceLine x={chartData?.find(d => d.type === 'forecast')?.month} stroke="#a8a29e" strokeDasharray="3 3" />
-                    <Area type="monotone" dataKey="range" fill="#6ee7b7" stroke="none" opacity={0.3} />
-                    <Line type="monotone" dataKey="price" stroke="#059669" strokeWidth={3} dot={{fill: '#059669', r: 3, strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 6, fill: '#059669'}} />
-                    </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-          </div>
-        ) : activeTab === 'compare' && comparisonData.length > 0 ? (
-            <div className="space-y-6">
-                <div className="bg-white/70 backdrop-blur-md p-6 md:p-8 rounded-[2rem] shadow-lg border border-white/50">
-                    <h3 className="font-bold text-stone-800 text-lg mb-4 flex items-center">
-                        <Truck className="w-5 h-5 mr-2 text-stone-500" /> Transport vs. Profit Analysis
-                    </h3>
-                    <p className="text-stone-600 mb-6 max-w-2xl leading-relaxed text-sm md:text-base">
-                        AI analysis suggests the best market to sell your {selectedCrop} based on current prices and estimated transport costs from {location}.
-                    </p>
-
+            {/* Content */}
+            <div className="p-4 md:p-8 flex-1 max-w-5xl mx-auto w-full space-y-6">
+                {loading && !data && activeTab === 'forecast' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-6">
+                            <Skeleton className="h-64 w-full" />
+                            <Skeleton className="h-32 w-full" />
+                            <Skeleton className="h-40 w-full" />
+                        </div>
+                        <Skeleton className="h-[400px] w-full" />
+                    </div>
+                ) : loading && comparisonData.length === 0 && activeTab === 'compare' ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {comparisonData.map((market, idx) => (
-                            <div key={idx} className={`relative p-6 rounded-2xl border-2 transition-all flex flex-col justify-between ${
-                                market.isBest 
-                                ? 'bg-emerald-50/80 border-emerald-500 shadow-xl transform scale-[1.02]' 
-                                : 'bg-white/60 border-stone-100 hover:border-emerald-200'
-                            }`}>
-                                {market.isBest && (
-                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-full shadow-md">
-                                        Best Option
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-48 w-full" />
+                    </div>
+                ) : activeTab === 'forecast' && data ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        {/* Left Column: Stats & Advice */}
+                        <div className="space-y-6">
+                            {/* Recommendation Card */}
+                            <div className={`p-6 md:p-8 rounded-[2rem] shadow-xl text-white relative overflow-hidden ${data.recommendation === 'SELL' ? 'bg-gradient-to-br from-emerald-700 to-teal-600' :
+                                data.recommendation === 'HOLD' ? 'bg-gradient-to-br from-amber-600 to-orange-500' :
+                                    'bg-gradient-to-br from-blue-700 to-indigo-600'
+                                }`}>
+                                <div className="relative z-10">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <span className="text-xs opacity-80 font-bold uppercase tracking-widest border border-white/20 px-2 py-1 rounded">AI Strategy</span>
+                                        {data.recommendation === 'SELL' ? <TrendingUp className="h-6 w-6" /> :
+                                            data.recommendation === 'HOLD' ? <Minus className="h-6 w-6" /> :
+                                                <TrendingDown className="h-6 w-6" />}
+                                    </div>
+                                    <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">{data.recommendation}</h1>
+                                    <p className="text-white/90 text-sm leading-relaxed border-t border-white/20 pt-4">
+                                        {data.reasoning}
+                                    </p>
+
+                                    <button
+                                        onClick={handleShareReport}
+                                        className="mt-4 flex items-center bg-white/20 hover:bg-white/30 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors border border-white/30"
+                                    >
+                                        <Share2 className="w-4 h-4 mr-2" /> Share Report
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Price Stats */}
+                            <div className="bg-white/70 backdrop-blur-md p-6 rounded-[2rem] shadow-lg border border-white/50 flex justify-between items-center relative">
+                                <div>
+                                    <p className="text-stone-500 text-xs font-bold uppercase tracking-wider">Current Market Price</p>
+                                    <p className="text-3xl font-bold text-stone-800 mt-1">
+                                        {data.currency} {data.currentPrice}
+                                        <span className="text-sm font-normal text-stone-500 ml-1">/ kg</span>
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={() => setShowAlertModal(true)}
+                                    className={`absolute top-4 right-4 p-2 rounded-full transition-all ${alerts.some(a => a.crop === selectedCrop) ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-300' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                                        }`}
+                                    title="Set Price Alert"
+                                >
+                                    {alerts.some(a => a.crop === selectedCrop) ? <BellRing className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
+                                </button>
+
+                                <div className="text-right">
+                                    <p className="text-stone-500 text-xs font-bold uppercase tracking-wider">Trend</p>
+                                    <p className={`font-bold text-lg mt-1 ${data.recommendation === 'SELL' ? 'text-emerald-600' : 'text-amber-600'
+                                        }`}>
+                                        {data.recommendation === 'SELL' ? 'High' : 'Stable'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Profit Calculator */}
+                            <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-[2rem] shadow-lg overflow-hidden">
+                                <div className="bg-stone-50/50 p-4 border-b border-stone-100 flex justify-between items-center cursor-pointer" onClick={() => setShowCalculator(!showCalculator)}>
+                                    <h3 className="font-bold text-stone-800 flex items-center"><Calculator className="w-4 h-4 mr-2 text-emerald-600" /> Revenue Estimator</h3>
+                                    <span className="text-xs text-stone-600 font-medium">{showCalculator ? "Collapse" : "Expand"}</span>
+                                </div>
+
+                                {showCalculator && (
+                                    <div className="p-4">
+                                        <label className="block text-xs font-bold text-stone-700 mb-2">Expected Harvest Volume</label>
+                                        <div className="flex gap-4 mb-4">
+                                            <input
+                                                type="number"
+                                                placeholder="Amount in KG"
+                                                value={harvestAmount}
+                                                onChange={(e) => setHarvestAmount(e.target.value)}
+                                                className="flex-1 border border-stone-200 rounded-xl p-3 text-sm text-stone-800 font-medium focus:ring-2 focus:ring-emerald-500 outline-none bg-white/50 placeholder:text-stone-400"
+                                            />
+                                            <div className="bg-stone-100/50 px-4 flex items-center border border-stone-200 rounded-xl text-sm font-bold text-stone-700">KG</div>
+                                        </div>
+
+                                        <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100 flex justify-between items-center">
+                                            <span className="text-sm text-emerald-800 font-medium">Estimated Gross Revenue:</span>
+                                            <span className="font-bold text-emerald-700 text-xl">
+                                                {data.currency} {calculateProfit().toLocaleString()}
+                                            </span>
+                                        </div>
                                     </div>
                                 )}
-                                <div className="text-center mb-4">
-                                    <h4 className="font-bold text-stone-800 text-lg">{market.marketName}</h4>
-                                    <p className="text-stone-500 text-sm">{market.distance} km away</p>
-                                </div>
-                                
-                                <div className="space-y-3 mb-4">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-stone-500">Market Price:</span>
-                                        <span className="font-semibold">{market.price} KES</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-stone-500">Transport:</span>
-                                        <span className="text-red-500 font-medium">-{market.transportCost} KES</span>
-                                    </div>
-                                    <div className="border-t border-stone-200 pt-3 flex justify-between items-center">
-                                        <span className="font-bold text-stone-700">Net Profit:</span>
-                                        <span className={`font-bold text-xl ${market.isBest ? 'text-emerald-700' : 'text-stone-800'}`}>
-                                            {market.netPrice} KES
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <a 
-                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(market.marketName)}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center transition-colors ${
-                                      market.isBest
-                                      ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
-                                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                                  }`}
-                                >
-                                    <Navigation className="w-4 h-4 mr-2" /> Get Directions
-                                </a>
                             </div>
-                        ))}
+                        </div>
+
+                        {/* Active Price Alerts Card */}
+                        {alerts.length > 0 && (
+                            <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-[2rem] shadow-lg overflow-hidden">
+                                <div className="bg-emerald-50/50 p-4 border-b border-emerald-100 flex justify-between items-center">
+                                    <h3 className="font-bold text-emerald-800 flex items-center">
+                                        <BellRing className="w-4 h-4 mr-2 text-emerald-600" /> Active Price Alerts
+                                    </h3>
+                                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold">{alerts.length}</span>
+                                </div>
+
+                                <div className="p-4 space-y-3">
+                                    {alerts.map(alert => {
+                                        const isTriggered = data && alert.crop === selectedCrop && data.currentPrice >= alert.price;
+                                        return (
+                                            <div key={alert.id} className={`p-3 rounded-xl border-2 transition-all ${isTriggered
+                                                ? 'bg-emerald-50 border-emerald-300 shadow-md'
+                                                : 'bg-stone-50 border-stone-200'
+                                                }`}>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <span className="font-bold text-stone-800 text-sm block">{alert.crop}</span>
+                                                        <span className="text-xs text-stone-600">Target: KES {alert.price}</span>
+                                                    </div>
+                                                    {isTriggered && (
+                                                        <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse">
+                                                            TRIGGERED ✓
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {alert.crop === selectedCrop && data && (
+                                                    <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-stone-200">
+                                                        <span className="text-stone-500">Current Price:</span>
+                                                        <span className={`font-bold ${isTriggered ? 'text-emerald-700' : 'text-stone-800'
+                                                            }`}>
+                                                            KES {data.currentPrice}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                    <button
+                                        onClick={() => setShowAlertModal(true)}
+                                        className="w-full py-2 text-sm text-emerald-700 font-semibold hover:bg-emerald-50 rounded-lg transition-colors flex items-center justify-center"
+                                    >
+                                        <Plus className="w-4 h-4 mr-1" /> Add New Alert
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+
+                        {/* Right Column: Chart */}
+                        <div className="bg-white/70 backdrop-blur-md p-6 rounded-[2rem] shadow-lg border border-white/50 flex flex-col h-[400px] md:h-auto">
+                            <h3 className="text-sm font-bold text-stone-700 mb-6 uppercase tracking-wider flex items-center justify-between">
+                                <span>Price Trend</span>
+                                <span className="text-xs font-normal text-stone-400 normal-case flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-emerald-200 block rounded-full"></span> 95% Conf.
+                                </span>
+                            </h3>
+                            <div className="flex-1 w-full min-h-[300px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                                        <XAxis
+                                            dataKey="month"
+                                            tick={{ fontSize: 10, fill: '#78716c' }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                            dy={10}
+                                            interval="preserveStartEnd"
+                                        />
+                                        <YAxis
+                                            tick={{ fontSize: 10, fill: '#78716c' }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tickFormatter={(value) => `${value}`}
+                                            width={40}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{
+                                                borderRadius: '16px',
+                                                border: 'none',
+                                                boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.15)',
+                                                fontFamily: 'sans-serif',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                fontSize: '12px'
+                                            }}
+                                        />
+                                        <ReferenceLine x={chartData?.find(d => d.type === 'forecast')?.month} stroke="#a8a29e" strokeDasharray="3 3" />
+                                        <Area type="monotone" dataKey="range" fill="#6ee7b7" stroke="none" opacity={0.3} />
+                                        <Line type="monotone" dataKey="price" stroke="#059669" strokeWidth={3} dot={{ fill: '#059669', r: 3, strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, fill: '#059669' }} />
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
                     </div>
-                </div>
+                ) : activeTab === 'compare' && comparisonData.length > 0 ? (
+                    <div className="space-y-6">
+                        <div className="bg-white/70 backdrop-blur-md p-6 md:p-8 rounded-[2rem] shadow-lg border border-white/50">
+                            <h3 className="font-bold text-stone-800 text-lg mb-4 flex items-center">
+                                <Truck className="w-5 h-5 mr-2 text-stone-500" /> Transport vs. Profit Analysis
+                            </h3>
+                            <p className="text-stone-600 mb-6 max-w-2xl leading-relaxed text-sm md:text-base">
+                                AI analysis suggests the best market to sell your {selectedCrop} based on current prices and estimated transport costs from {location}.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {comparisonData.map((market, idx) => (
+                                    <div key={idx} className={`relative p-6 rounded-2xl border-2 transition-all flex flex-col justify-between ${market.isBest
+                                        ? 'bg-emerald-50/80 border-emerald-500 shadow-xl transform scale-[1.02]'
+                                        : 'bg-white/60 border-stone-100 hover:border-emerald-200'
+                                        }`}>
+                                        {market.isBest && (
+                                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-full shadow-md">
+                                                Best Option
+                                            </div>
+                                        )}
+                                        <div className="text-center mb-4">
+                                            <h4 className="font-bold text-stone-800 text-lg">{market.marketName}</h4>
+                                            <p className="text-stone-500 text-sm">{market.distance} km away</p>
+                                        </div>
+
+                                        <div className="space-y-3 mb-4">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-stone-500">Market Price:</span>
+                                                <span className="font-semibold">{market.price} KES</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-stone-500">Transport:</span>
+                                                <span className="text-red-500 font-medium">-{market.transportCost} KES</span>
+                                            </div>
+                                            <div className="border-t border-stone-200 pt-3 flex justify-between items-center">
+                                                <span className="font-bold text-stone-700">Net Profit:</span>
+                                                <span className={`font-bold text-xl ${market.isBest ? 'text-emerald-700' : 'text-stone-800'}`}>
+                                                    {market.netPrice} KES
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <a
+                                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(market.marketName)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center transition-colors ${market.isBest
+                                                ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
+                                                : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                                                }`}
+                                        >
+                                            <Navigation className="w-4 h-4 mr-2" /> Get Directions
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
             </div>
-        ) : null}
-      </div>
 
-      {/* Alert Modal */}
-      {showAlertModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-md">
-              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 animate-in zoom-in-95">
-                  <div className="p-5 border-b border-stone-100 flex justify-between items-center">
-                      <h3 className="font-bold text-lg text-stone-800 flex items-center">
-                          <Bell className="w-5 h-5 mr-2 text-emerald-600" /> Price Alerts
-                      </h3>
-                      <button onClick={() => setShowAlertModal(false)} className="text-stone-400 hover:text-stone-600"><X className="w-5 h-5" /></button>
-                  </div>
-                  <div className="p-6">
-                      <div className="mb-6">
-                          <label className="block text-xs font-bold text-stone-500 uppercase mb-2">Create New Alert for {selectedCrop}</label>
-                          <div className="flex gap-2">
-                              <div className="relative flex-1">
-                                  <span className="absolute left-3 top-3 text-stone-400 text-sm">KES</span>
-                                  <input 
-                                      type="number" 
-                                      placeholder="Target Price"
-                                      value={newAlertPrice}
-                                      onChange={(e) => setNewAlertPrice(e.target.value)}
-                                      className="w-full pl-12 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"
-                                  />
-                              </div>
-                              <button 
-                                  onClick={handleAddAlert}
-                                  className="bg-emerald-600 text-white px-4 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-600/20"
-                              >
-                                  <Plus className="w-5 h-5" />
-                              </button>
-                          </div>
-                      </div>
+            {/* Alert Modal */}
+            {
+                showAlertModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-md">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 animate-in zoom-in-95">
+                            <div className="p-5 border-b border-stone-100 flex justify-between items-center">
+                                <h3 className="font-bold text-lg text-stone-800 flex items-center">
+                                    <Bell className="w-5 h-5 mr-2 text-emerald-600" /> Price Alerts
+                                </h3>
+                                <button onClick={() => setShowAlertModal(false)} className="text-stone-400 hover:text-stone-600"><X className="w-5 h-5" /></button>
+                            </div>
+                            <div className="p-6">
+                                <div className="mb-6">
+                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2">Create New Alert for {selectedCrop}</label>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            {!newAlertPrice && <span className="absolute left-3 top-3 text-stone-400 text-sm pointer-events-none">KES</span>}
+                                            <input
+                                                type="number"
+                                                placeholder="Target Price"
+                                                value={newAlertPrice}
+                                                onChange={(e) => setNewAlertPrice(e.target.value)}
+                                                className="w-full pl-12 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-stone-800 font-medium bg-white placeholder:text-stone-400"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleAddAlert}
+                                            className="bg-emerald-600 text-white px-4 rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-600/20"
+                                        >
+                                            <Plus className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
 
-                      <div>
-                          <h4 className="text-sm font-bold text-stone-700 mb-3">Active Alerts</h4>
-                          {alerts.length === 0 ? (
-                              <p className="text-sm text-stone-400 italic text-center py-4 bg-stone-50 rounded-xl">No alerts set.</p>
-                          ) : (
-                              <div className="space-y-2">
-                                  {alerts.map(alert => (
-                                      <div key={alert.id} className="flex justify-between items-center p-3 bg-stone-50 rounded-xl border border-stone-100">
-                                          <div>
-                                              <span className="font-bold text-stone-800 block text-sm">{alert.crop}</span>
-                                              <span className="text-xs text-stone-500">Notify when above {alert.price} KES</span>
-                                          </div>
-                                          <button onClick={() => removeAlert(alert.id)} className="text-stone-400 hover:text-red-500">
-                                              <X className="w-4 h-4" />
-                                          </button>
-                                      </div>
-                                  ))}
-                              </div>
-                          )}
-                      </div>
-                  </div>
-              </div>
-          </div>
-      )}
-    </div>
-  );
+                                <div>
+                                    <h4 className="text-sm font-bold text-stone-700 mb-3">Active Alerts</h4>
+                                    {alerts.length === 0 ? (
+                                        <p className="text-sm text-stone-400 italic text-center py-4 bg-stone-50 rounded-xl">No alerts set.</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {alerts.map(alert => (
+                                                <div key={alert.id} className="flex justify-between items-center p-3 bg-stone-50 rounded-xl border border-stone-100">
+                                                    <div>
+                                                        <span className="font-bold text-stone-800 block text-sm">{alert.crop}</span>
+                                                        <span className="text-xs text-stone-600">Notify when above {alert.price} KES</span>
+                                                    </div>
+                                                    <button onClick={() => removeAlert(alert.id)} className="text-stone-400 hover:text-red-500">
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
+    );
 };
 
 export default MarketForecast;
