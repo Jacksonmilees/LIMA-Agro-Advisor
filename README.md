@@ -121,19 +121,12 @@ git clone https://github.com/Jacksonmilees/LIMA-Agro-Advisor
 cd lima
 ```
 
-2. **Install backend dependencies**
+2. **Install dependencies**
 ```bash
-cd backend
-pip install -r requirements.txt
-```
-
-3. **Install frontend dependencies**
-```bash
-cd ../frontend
 npm install
 ```
 
-4. **Set up environment variables**
+3. **Set up environment variables**
 ```bash
 # Copy example env file
 cp .env.example .env
@@ -141,12 +134,6 @@ cp .env.example .env
 # Edit .env with your credentials
 nano .env
 ```
-
-Required environment variables:
-```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/lima_db
-REDIS_URL=redis://localhost:6379
 
 # Google Earth Engine
 GEE_SERVICE_ACCOUNT_EMAIL=your-service-account@project.iam.gserviceaccount.com
