@@ -1,0 +1,703 @@
+{
+    "info": {
+        "_postman_id": "lima-api-auth",
+        "name": "LIMA API - Authentication Module",
+        "description": "Comprehensive test collection for LIMA Authentication & User Management API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "refresh_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "user_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "1. User Registration",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "// Test: Status should be 201 Created",
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "// Test: Response should have required fields",
+                            "pm.test(\"Response has user and tokens\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('user');",
+                            "    pm.expect(jsonData).to.have.property('tokens');",
+                            "    pm.expect(jsonData.tokens).to.have.property('access');",
+                            "    pm.expect(jsonData.tokens).to.have.property('refresh');",
+                            "});",
+                            "",
+                            "// Save tokens for future requests",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.tokens.access);",
+                            "pm.collectionVariables.set(\"refresh_token\", jsonData.tokens.refresh);",
+                            "pm.collectionVariables.set(\"user_id\", jsonData.user.id);",
+                            "",
+                            "console.log(\"✅ User registered successfully!\");",
+                            "console.log(\"Access Token:\", jsonData.tokens.access);",
+                            "console.log(\"User ID:\", jsonData.user.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"username\": \"farmer1\",\n    \"password\": \"SecurePassword123!\",\n    \"password_confirm\": \"SecurePassword123!\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"phone\": \"+254712345678\",\n    \"language\": \"en\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/register/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "register",
+                        ""
+                    ]
+                },
+                "description": "Register a new user. Returns user details and JWT tokens."
+            },
+            "response": []
+        },
+        {
+            "name": "2. User Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has access and refresh tokens\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('access');",
+                            "    pm.expect(jsonData).to.have.property('refresh');",
+                            "});",
+                            "",
+                            "// Save tokens",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "pm.collectionVariables.set(\"refresh_token\", jsonData.refresh);",
+                            "",
+                            "console.log(\"✅ Login successful!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                },
+                "description": "Login with email and password. Returns JWT access and refresh tokens."
+            },
+            "response": []
+        },
+        {
+            "name": "3. Get Current User Profile",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Response has user data\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('email');",
+                            "    pm.expect(jsonData).to.have.property('first_name');",
+                            "    pm.expect(jsonData).to.have.property('last_name');",
+                            "    pm.expect(jsonData.email).to.eql('farmer1@lima.com');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Profile retrieved successfully!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{access_token}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/me/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "me",
+                        ""
+                    ]
+                },
+                "description": "Get current authenticated user's profile. Requires JWT token."
+            },
+            "response": []
+        },
+        {
+            "name": "4. Update User Profile",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Profile updated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.language).to.eql('sw');",
+                            "    pm.expect(jsonData.notification_enabled).to.eql(false);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Profile updated successfully!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{access_token}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"language\": \"sw\",\n    \"notification_enabled\": false,\n    \"sms_alerts_enabled\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/me/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "me",
+                        ""
+                    ]
+                },
+                "description": "Update user profile (partial update with PATCH)."
+            },
+            "response": []
+        },
+        {
+            "name": "5. Change Password",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Password changed successfully\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.message).to.include('Password changed');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Password changed!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{access_token}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"old_password\": \"SecurePassword123!\",\n    \"new_password\": \"NewPassword456!\",\n    \"new_password_confirm\": \"NewPassword456!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/password/change/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "password",
+                        "change",
+                        ""
+                    ]
+                },
+                "description": "Change user password (requires old password)."
+            },
+            "response": []
+        },
+        {
+            "name": "6. Refresh Access Token",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"New access token received\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('access');",
+                            "});",
+                            "",
+                            "// Update access token",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "",
+                            "console.log(\"✅ Token refreshed!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/refresh/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "refresh",
+                        ""
+                    ]
+                },
+                "description": "Refresh expired access token using refresh token."
+            },
+            "response": []
+        },
+        {
+            "name": "7. Password Reset Request",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Reset link sent message\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.message).to.include('Password reset');",
+                            "});",
+                            "",
+                            "// In development, token is returned in response",
+                            "// Save for next request",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.token) {",
+                            "    pm.environment.set(\"reset_token\", jsonData.token);",
+                            "    pm.environment.set(\"reset_uid\", jsonData.uid);",
+                            "    console.log(\"Reset Token:\", jsonData.token);",
+                            "    console.log(\"Reset UID:\", jsonData.uid);",
+                            "}",
+                            "",
+                            "console.log(\"✅ Password reset email sent!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/password/reset/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "password",
+                        "reset",
+                        ""
+                    ]
+                },
+                "description": "Request password reset (sends email with token). In dev mode, returns token in response."
+            },
+            "response": []
+        },
+        {
+            "name": "8. Password Reset Confirm",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Password reset successful\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.message).to.include('Password reset successful');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Password reset complete!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"uid\": \"{{reset_uid}}\",\n    \"token\": \"{{reset_token}}\",\n    \"new_password\": \"ResetPassword789!\",\n    \"new_password_confirm\": \"ResetPassword789!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/password/reset/confirm/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "password",
+                        "reset",
+                        "confirm",
+                        ""
+                    ]
+                },
+                "description": "Confirm password reset with token from email."
+            },
+            "response": []
+        },
+        {
+            "name": "9. Logout",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Logged out successfully\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.message).to.include('Logged out');",
+                            "});",
+                            "",
+                            "// Clear tokens",
+                            "pm.collectionVariables.set(\"access_token\", \"\");",
+                            "pm.collectionVariables.set(\"refresh_token\", \"\");",
+                            "",
+                            "console.log(\"✅ Logged out successfully!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "{{access_token}}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/logout/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "logout",
+                        ""
+                    ]
+                },
+                "description": "Logout user and blacklist refresh token."
+            },
+            "response": []
+        },
+        {
+            "name": "10. ❌ Test Unauthorized Access",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                            "    pm.response.to.have.status(401);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Correctly blocked unauthorized access!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/me/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "me",
+                        ""
+                    ]
+                },
+                "description": "Test accessing protected endpoint without authentication. Should return 401."
+            },
+            "response": []
+        },
+        {
+            "name": "11. ❌ Test Invalid Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 401\", function () {",
+                            "    pm.response.to.have.status(401);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Correctly rejected invalid credentials!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"WrongPassword!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                },
+                "description": "Test login with wrong password. Should return 401."
+            },
+            "response": []
+        },
+        {
+            "name": "12. ❌ Test Duplicate Email Registration",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 400 Bad Request\", function () {",
+                            "    pm.response.to.have.status(400);",
+                            "});",
+                            "",
+                            "pm.test(\"Error mentions duplicate email\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    var hasEmailError = JSON.stringify(jsonData).includes('email') || ",
+                            "                        JSON.stringify(jsonData).includes('already exists');",
+                            "    pm.expect(hasEmailError).to.be.true;",
+                            "});",
+                            "",
+                            "console.log(\"✅ Correctly prevented duplicate registration!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"username\": \"farmer1duplicate\",\n    \"password\": \"SecurePassword123!\",\n    \"password_confirm\": \"SecurePassword123!\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Duplicate\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/register/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "register",
+                        ""
+                    ]
+                },
+                "description": "Test registering with an already used email. Should return 400."
+            },
+            "response": []
+        }
+    ]
+}

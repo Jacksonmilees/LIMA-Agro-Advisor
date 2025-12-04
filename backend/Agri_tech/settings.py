@@ -9,8 +9,9 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure-xfkyt)$5s!5&j#-^w(%=25&=q@wl=(ld*xt!68!uwu4je8bpj(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -37,17 +38,42 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third-party apps
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
+    'drf_spectacular',
+    
+    # LIMA apps
+    'users',
+    'farms',
+    'climate',
+    'insurance',
+    'market',
+    'agronomy',
+    'communication',
+    'journal',
+    'notifications',
+    'core',
 ]
+
+# Custom User Model
+AUTH_USER_MODEL = 'users.User'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS handling
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'Agri_tech.urls'
 
@@ -72,10 +98,20 @@ WSGI_APPLICATION = 'Agri_tech.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'postgres'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
+        'OPTIONS': {
+            'sslmode': 'require',  # Required for Supabase
+        }
     }
 }
 
@@ -120,3 +156,82 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ============================================
+# REST FRAMEWORK CONFIGURATION
+# ============================================
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+
+# ============================================
+# JWT CONFIGURATION
+# ============================================
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+}
+
+
+# ============================================
+# CORS CONFIGURATION
+# ============================================
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite dev server
+    "http://localhost:3000",  # React dev server
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+
+# ============================================
+# DRF SPECTACULAR (Swagger/OpenAPI)
+# ============================================
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'LIMA API',
+    'DESCRIPTION': 'Learning Intelligent Market Agro-advisor API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+
+
+# ============================================
+# MEDIA FILES (User uploads)
+# ============================================
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# ============================================ 
+# EMAIL CONFIGURATION (for password reset)
+# ============================================
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Development: prints to console
+# For production, use:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = 'LIMA <noreply@lima-agro.com>'
+
+# Frontend URL (for password reset links)
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
