@@ -1,0 +1,756 @@
+{
+    "info": {
+        "_postman_id": "lima-farms-api",
+        "name": "LIMA API - Farms Module",
+        "description": "Test collection for LIMA Farms API (Profiles, Harvests, Expenses, Analytics)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "harvest_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "expense_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Setup - Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Login successful\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "console.log(\"✅ Logged in. Token saved.\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "1. Create Farm Profile",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201 or 200\", function () {",
+                            "    pm.expect([200, 201]).to.include(pm.response.code);",
+                            "});",
+                            "",
+                            "pm.test(\"Farm profile created\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('data');",
+                            "    pm.expect(jsonData.data.county).to.eql('nakuru');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Farm profile created!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"farm_name\": \"Sunshine Farms\",\n    \"county\": \"nakuru\",\n    \"location\": \"Nakuru Town\",\n    \"latitude\": -0.3031,\n    \"longitude\": 36.0800,\n    \"size_acres\": 5.5,\n    \"crops\": [\"Maize\", \"Beans\", \"Potatoes\"],\n    \"farming_type\": \"mixed\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/profile/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "profile",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "2. Get Farm Profile",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Farm profile data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.farm_name).to.eql('Sunshine Farms');",
+                            "    pm.expect(jsonData.size_acres).to.eql('5.50');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Farm profile retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/profile/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "profile",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "3. Update Farm Profile",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Profile updated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.size_acres).to.eql('6.00');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Farm profile updated!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"size_acres\": 6.0,\n    \"crops\": [\"Maize\", \"Beans\", \"Potatoes\", \"Tomatoes\"]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/profile/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "profile",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "4. Create Harvest Record",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Harvest record created\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.crop).to.eql('Maize');",
+                            "    pm.expect(jsonData.quantity_kg).to.eql('500.00');",
+                            "    pm.expect(jsonData.estimated_value).to.not.be.null;",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"harvest_id\", jsonData.id);",
+                            "console.log(\"✅ Harvest record created! ID:\", jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"crop\": \"Maize\",\n    \"quantity_kg\": 500,\n    \"harvest_date\": \"2025-11-15\",\n    \"price_per_kg\": 45.50,\n    \"notes\": \"Good harvest season\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/harvests/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "harvests",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "5. Get All Harvest Records",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Harvest list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    pm.expect(jsonData.length).to.be.greaterThan(0);",
+                            "});",
+                            "",
+                            "// Save first harvest ID for later tests",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"harvest_id\", jsonData[0].id);",
+                            "    console.log(\"✅ Harvest records retrieved! Using ID:\", jsonData[0].id);",
+                            "} else {",
+                            "    console.log(\"⚠️ No harvest records found\");",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/harvests/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "harvests",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "6. Get Specific Harvest",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Harvest details retrieved\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.id).to.exist;",
+                            "    pm.expect(jsonData.crop).to.exist;",
+                            "});",
+                            "",
+                            "console.log(\"✅ Harvest details retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/harvests/{{harvest_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "harvests",
+                        "{{harvest_id}}",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "7. Update Harvest Record",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Harvest updated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.quantity_kg).to.eql('550.00');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Harvest record updated!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"quantity_kg\": 550,\n    \"notes\": \"Updated harvest quantity after weighing\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/harvests/{{harvest_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "harvests",
+                        "{{harvest_id}}",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "8. Create Expense Record",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Expense record created\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.category).to.eql('fertilizer');",
+                            "    pm.expect(jsonData.amount).to.eql('5000.00');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"expense_id\", jsonData.id);",
+                            "console.log(\"✅ Expense record created! ID:\", jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"category\": \"fertilizer\",\n    \"amount\": 5000,\n    \"date\": \"2025-11-01\",\n    \"description\": \"NPK fertilizer purchase\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/expenses/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "expenses",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "9. Get All Expenses",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Expense list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "// Save first expense ID for later tests",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"expense_id\", jsonData[0].id);",
+                            "    console.log(\"✅ Expense records retrieved! Using ID:\", jsonData[0].id);",
+                            "} else {",
+                            "    console.log(\"⚠️ No expense records found\");",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/expenses/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "expenses",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "10. Update Expense",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Expense updated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.amount).to.eql('5500.00');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Expense updated!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"amount\": 5500\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/expenses/{{expense_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "expenses",
+                        "{{expense_id}}",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "11. Get Farm Analytics",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Analytics data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('total_harvest_value');",
+                            "    pm.expect(jsonData).to.have.property('total_expenses');",
+                            "    pm.expect(jsonData).to.have.property('gross_profit');",
+                            "    pm.expect(jsonData).to.have.property('top_crops');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Analytics retrieved!\");",
+                            "console.log(\"Revenue:\", jsonData.total_harvest_value);",
+                            "console.log(\"Expenses:\", jsonData.total_expenses);",
+                            "console.log(\"Profit:\", jsonData.gross_profit);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/analytics/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "analytics",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "12. Filter Harvests by Crop",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Filtered results for Maize\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    if (jsonData.length > 0) {",
+                            "        pm.expect(jsonData[0].crop).to.eql('Maize');",
+                            "    }",
+                            "});",
+                            "",
+                            "console.log(\"✅ Harvest filtering works!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/harvests/?crop=Maize",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "harvests",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "crop",
+                            "value": "Maize"
+                        }
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "13. Delete Harvest Record",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 204\", function () {",
+                            "    pm.response.to.have.status(204);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Harvest deleted!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/harvests/{{harvest_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "harvests",
+                        "{{harvest_id}}",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "14. Delete Expense Record",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 204\", function () {",
+                            "    pm.response.to.have.status(204);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Expense deleted!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/farms/expenses/{{expense_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "farms",
+                        "expenses",
+                        "{{expense_id}}",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        }
+    ]
+}

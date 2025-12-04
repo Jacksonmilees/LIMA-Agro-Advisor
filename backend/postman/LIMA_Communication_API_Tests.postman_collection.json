@@ -1,0 +1,565 @@
+{
+    "info": {
+        "_postman_id": "lima-communication-api",
+        "name": "LIMA API - Communication Module",
+        "description": "Test collection for LIMA Communication API (Notifications, SMS, Email)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "notification_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Setup - Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Login successful\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "console.log(\"✅ Logged in. Token saved.\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "1. Get All Notifications",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Notifications list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"notification_id\", jsonData[0].id);",
+                            "    console.log(\"✅ Notifications retrieved! Count:\", jsonData.length);",
+                            "    console.log(\"   First notification:\", jsonData[0].title);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/notifications/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "notifications",
+                        ""
+                    ]
+                },
+                "description": "Get all notifications for user"
+            },
+            "response": []
+        },
+        {
+            "name": "2. Get Unread Notifications",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Only unread notifications returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    jsonData.forEach(function(notif) {",
+                            "        pm.expect(notif.is_read).to.be.false;",
+                            "    });",
+                            "});",
+                            "",
+                            "console.log(\"✅ Unread notifications filtered!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/notifications/?is_read=false",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "notifications",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "is_read",
+                            "value": "false"
+                        }
+                    ]
+                },
+                "description": "Get only unread notifications"
+            },
+            "response": []
+        },
+        {
+            "name": "3. Get Specific Notification",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Notification details returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('title');",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Notification details retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/notifications/{{notification_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "notifications",
+                        "{{notification_id}}",
+                        ""
+                    ]
+                },
+                "description": "Get specific notification (auto-marks as read)"
+            },
+            "response": []
+        },
+        {
+            "name": "4. Send Custom Notification",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Notification created\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('id');",
+                            "    pm.expect(jsonData.title).to.eql('Test Notification');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"notification_id\", jsonData.id);",
+                            "console.log(\"✅ Notification sent! ID:\", jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"notification_type\": \"general\",\n    \"title\": \"Test Notification\",\n    \"message\": \"This is a test notification from the API\",\n    \"priority\": \"medium\",\n    \"send_sms\": true,\n    \"send_email\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/send/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "send",
+                        ""
+                    ]
+                },
+                "description": "Send a custom notification with SMS and Email"
+            },
+            "response": []
+        },
+        {
+            "name": "5. Mark Notifications as Read",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Notifications marked as read\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Notifications marked as read!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"notification_ids\": [{{notification_id}}]\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/notifications/mark-read/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "notifications",
+                        "mark-read",
+                        ""
+                    ]
+                },
+                "description": "Mark notifications as read"
+            },
+            "response": []
+        },
+        {
+            "name": "6. Get Notification Preferences",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Preferences data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('sms_enabled');",
+                            "    pm.expect(jsonData).to.have.property('email_enabled');",
+                            "    pm.expect(jsonData).to.have.property('weather_alerts');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Preferences retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/preferences/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "preferences",
+                        ""
+                    ]
+                },
+                "description": "Get notification preferences"
+            },
+            "response": []
+        },
+        {
+            "name": "7. Update Preferences",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Preferences updated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.weather_alerts).to.be.true;",
+                            "    pm.expect(jsonData.price_alerts).to.be.true;",
+                            "});",
+                            "",
+                            "console.log(\"✅ Preferences updated!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PUT",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"sms_enabled\": true,\n    \"email_enabled\": true,\n    \"weather_alerts\": true,\n    \"price_alerts\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/preferences/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "preferences",
+                        ""
+                    ]
+                },
+                "description": "Update notification preferences"
+            },
+            "response": []
+        },
+        {
+            "name": "8. Get SMS Logs",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"SMS logs returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ SMS logs retrieved! Count:\", jsonData.length);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/sms-logs/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "sms-logs",
+                        ""
+                    ]
+                },
+                "description": "Get SMS delivery logs"
+            },
+            "response": []
+        },
+        {
+            "name": "9. Get Email Logs",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Email logs returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Email logs retrieved! Count:\", jsonData.length);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/email-logs/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "email-logs",
+                        ""
+                    ]
+                },
+                "description": "Get email delivery logs"
+            },
+            "response": []
+        },
+        {
+            "name": "10. Get Communication Summary",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Summary data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('total_notifications');",
+                            "    pm.expect(jsonData).to.have.property('unread_count');",
+                            "    pm.expect(jsonData).to.have.property('recent_notifications');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Communication summary retrieved!\");",
+                            "console.log(\"   Total notifications:\", jsonData.total_notifications);",
+                            "console.log(\"   Unread:\", jsonData.unread_count);",
+                            "console.log(\"   Recent:\", jsonData.recent_notifications.length);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/communication/summary/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "communication",
+                        "summary",
+                        ""
+                    ]
+                },
+                "description": "Get communication statistics"
+            },
+            "response": []
+        }
+    ]
+}

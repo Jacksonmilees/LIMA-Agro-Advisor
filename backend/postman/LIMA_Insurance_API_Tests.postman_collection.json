@@ -1,0 +1,674 @@
+{
+    "info": {
+        "_postman_id": "lima-insurance-api",
+        "name": "LIMA API - Insurance Module",
+        "description": "Test collection for LIMA Insurance API (Parametric Insurance, Triggers, Claims)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "policy_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "claim_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Setup - Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Login successful\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "console.log(\"✅ Logged in. Token saved.\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "1. Get All Policies",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Policies list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "// Save first policy ID if exists",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"policy_id\", jsonData[0].id);",
+                            "    console.log(\"✅ Policies retrieved! Using ID:\", jsonData[0].id);",
+                            "    console.log(\"   Policy:\", jsonData[0].policy_number);",
+                            "    console.log(\"   Type:\", jsonData[0].policy_type_display);",
+                            "    console.log(\"   Coverage: KES\", jsonData[0].coverage_amount);",
+                            "} else {",
+                            "    console.log(\"⚠️ No policies found\");",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/policies/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "policies",
+                        ""
+                    ]
+                },
+                "description": "Get all insurance policies for user's farm"
+            },
+            "response": []
+        },
+        {
+            "name": "2. Create Insurance Policy",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Policy created with auto-generated number\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('policy_number');",
+                            "    pm.expect(jsonData.policy_number).to.match(/^POL[A-Z0-9]{8}$/);",
+                            "    pm.expect(jsonData.policy_type).to.eql('flood');",
+                            "    pm.expect(jsonData.coverage_amount).to.eql('150000.00');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"policy_id\", jsonData.id);",
+                            "console.log(\"✅ Policy created! Number:\", jsonData.policy_number);",
+                            "console.log(\"   Coverage: KES\", jsonData.coverage_amount);",
+                            "console.log(\"   Premium: KES\", jsonData.premium_amount);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"policy_type\": \"flood\",\n    \"coverage_amount\": 150000,\n    \"premium_amount\": 7500,\n    \"payment_frequency\": \"quarterly\",\n    \"start_date\": \"2025-01-01\",\n    \"end_date\": \"2025-12-31\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/policies/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "policies",
+                        ""
+                    ]
+                },
+                "description": "Create new insurance policy (auto-assigns to user's farm)"
+            },
+            "response": []
+        },
+        {
+            "name": "3. Get Specific Policy",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Policy details returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('policy_number');",
+                            "    pm.expect(jsonData).to.have.property('triggers');",
+                            "    pm.expect(jsonData).to.have.property('is_valid');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Policy details retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/policies/{{policy_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "policies",
+                        "{{policy_id}}",
+                        ""
+                    ]
+                },
+                "description": "Get specific policy details with triggers"
+            },
+            "response": []
+        },
+        {
+            "name": "3a. Activate Policy",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Policy activated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.status).to.eql('active');",
+                            "    pm.expect(jsonData.is_paid).to.be.true;",
+                            "});",
+                            "",
+                            "console.log(\"✅ Policy activated and marked as paid!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"active\",\n    \"is_paid\": true,\n    \"payment_date\": \"2025-01-01\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/policies/{{policy_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "policies",
+                        "{{policy_id}}",
+                        ""
+                    ]
+                },
+                "description": "Activate policy and mark as paid (required for trigger evaluation)"
+            },
+            "response": []
+        },
+        {
+            "name": "4. Evaluate Triggers",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Trigger evaluation response\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('message');",
+                            "    pm.expect(jsonData).to.have.property('policy_status');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Triggers evaluated!\");",
+                            "console.log(\"   Result:\", jsonData.message);",
+                            "",
+                            "if (jsonData.triggers_activated && jsonData.triggers_activated.length > 0) {",
+                            "    console.log(\"   🚨 TRIGGERED!\");",
+                            "    jsonData.triggers_activated.forEach(function(trigger) {",
+                            "        console.log(\"   -\", trigger.trigger_type);",
+                            "        console.log(\"     Measured:\", trigger.measured_value);",
+                            "        console.log(\"     Threshold:\", trigger.threshold);",
+                            "        console.log(\"     Claim:\", trigger.claim_number, \"- KES\", trigger.claim_amount);",
+                            "    });",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/policies/{{policy_id}}/evaluate/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "policies",
+                        "{{policy_id}}",
+                        "evaluate",
+                        ""
+                    ]
+                },
+                "description": "Evaluate policy triggers against weather data (auto-creates claims if triggered)"
+            },
+            "response": []
+        },
+        {
+            "name": "5. Get All Claims",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Claims list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "// Save first claim ID if exists",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"claim_id\", jsonData[0].id);",
+                            "    console.log(\"✅ Claims retrieved! Using ID:\", jsonData[0].id);",
+                            "    console.log(\"   Claim:\", jsonData[0].claim_number);",
+                            "    console.log(\"   Amount: KES\", jsonData[0].claim_amount);",
+                            "    console.log(\"   Status:\", jsonData[0].status_display);",
+                            "} else {",
+                            "    console.log(\"⚠️ No claims found\");",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/claims/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "claims",
+                        ""
+                    ]
+                },
+                "description": "Get all insurance claims"
+            },
+            "response": []
+        },
+        {
+            "name": "6. Create Manual Claim",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Manual claim created\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.claim_type).to.eql('manual');",
+                            "    pm.expect(jsonData).to.have.property('claim_number');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"claim_id\", jsonData.id);",
+                            "console.log(\"✅ Manual claim created:\", jsonData.claim_number);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"policy\": {{policy_id}},\n    \"claim_type\": \"manual\",\n    \"claim_amount\": 50000,\n    \"description\": \"Manual claim for crop damage\",\n    \"status\": \"pending\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/claims/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "claims",
+                        ""
+                    ]
+                },
+                "description": "Create manual insurance claim"
+            },
+            "response": []
+        },
+        {
+            "name": "7. Update Claim Status",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Claim updated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.status).to.eql('approved');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Claim status updated to approved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"approved\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/claims/{{claim_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "claims",
+                        "{{claim_id}}",
+                        ""
+                    ]
+                },
+                "description": "Update claim status"
+            },
+            "response": []
+        },
+        {
+            "name": "8. Get Policy Recommendations",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Recommendations returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Recommendations generated!\");",
+                            "",
+                            "if (jsonData.length > 0) {",
+                            "    jsonData.forEach(function(rec) {",
+                            "        console.log(\"   📋\", rec.policy_type_display);",
+                            "        console.log(\"      Coverage: KES\", rec.recommended_coverage);",
+                            "        console.log(\"      Premium: KES\", rec.recommended_premium);",
+                            "        console.log(\"      Confidence:\", rec.confidence_score + \"%\");",
+                            "        console.log(\"      Reason:\", rec.risk_assessment_summary);",
+                            "    });",
+                            "} else {",
+                            "    console.log(\"   No immediate insurance needs detected\");",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/recommendations/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "recommendations",
+                        ""
+                    ]
+                },
+                "description": "Get AI-generated policy recommendations based on climate risk"
+            },
+            "response": []
+        },
+        {
+            "name": "9. Record Premium Payment",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Payment recorded\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.payment_method).to.eql('mpesa');",
+                            "    pm.expect(jsonData.amount).to.eql('7500.00');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Premium payment recorded!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"policy\": {{policy_id}},\n    \"amount\": 7500,\n    \"payment_date\": \"2025-01-01\",\n    \"payment_method\": \"mpesa\",\n    \"transaction_ref\": \"MPX123456\",\n    \"is_confirmed\": true\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/payments/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "payments",
+                        ""
+                    ]
+                },
+                "description": "Record premium payment"
+            },
+            "response": []
+        },
+        {
+            "name": "10. Get Insurance Analytics",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Analytics data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('total_policies');",
+                            "    pm.expect(jsonData).to.have.property('total_coverage');",
+                            "    pm.expect(jsonData).to.have.property('total_claims');",
+                            "    pm.expect(jsonData).to.have.property('policies_by_type');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Insurance analytics retrieved!\");",
+                            "console.log(\"   Farm:\", jsonData.farm_name);",
+                            "console.log(\"   Policies:\", jsonData.total_policies, \"(\" + jsonData.active_policies + \" active)\");",
+                            "console.log(\"   Total Coverage: KES\", jsonData.total_coverage);",
+                            "console.log(\"   Total Premiums: KES\", jsonData.total_premiums);",
+                            "console.log(\"   Claims:\", jsonData.total_claims, \"(\" + jsonData.approved_claims + \" approved)\");",
+                            "console.log(\"   Total Payouts: KES\", jsonData.total_payouts);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/insurance/analytics/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "insurance",
+                        "analytics",
+                        ""
+                    ]
+                },
+                "description": "Get comprehensive insurance statistics"
+            },
+            "response": []
+        }
+    ]
+}

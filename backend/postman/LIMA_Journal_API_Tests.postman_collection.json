@@ -1,0 +1,483 @@
+{
+    "info": {
+        "_postman_id": "lima-journal-api",
+        "name": "LIMA API - Journal Module",
+        "description": "Test collection for LIMA Journal API (Farm Diary, Field Activities)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "entry_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "activity_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Setup - Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Login successful\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "console.log(\"✅ Logged in. Token saved.\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "1. Get All Journal Entries",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Journal entries list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"entry_id\", jsonData[0].id);",
+                            "    console.log(\"✅ Journal entries retrieved! Count:\", jsonData.length);",
+                            "    console.log(\"   First entry:\", jsonData[0].title);",
+                            "    console.log(\"   Using entry_id:\", jsonData[0].id);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/journal/entries/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "journal",
+                        "entries",
+                        ""
+                    ]
+                },
+                "description": "Get all journal entries for user's farm"
+            },
+            "response": []
+        },
+        {
+            "name": "2. Create Journal Entry",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Entry created\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('id');",
+                            "    pm.expect(jsonData.title).to.eql('Harvested beans today');",
+                            "    pm.expect(jsonData.entry_type).to.eql('harvesting');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"entry_id\", jsonData.id);",
+                            "console.log(\"✅ Journal entry created! ID:\", jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"title\": \"Harvested beans today\",\n    \"entry_date\": \"2024-12-01\",\n    \"entry_type\": \"harvesting\",\n    \"content\": \"Harvested 500kg of beans from the south field. Quality was excellent.\",\n    \"crop_name\": \"Beans\",\n    \"field_section\": \"South Field\",\n    \"tags\": \"beans, harvest, success\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/journal/entries/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "journal",
+                        "entries",
+                        ""
+                    ]
+                },
+                "description": "Create new journal entry"
+            },
+            "response": []
+        },
+        {
+            "name": "3. Get Specific Entry",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Entry details returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('title');",
+                            "    pm.expect(jsonData).to.have.property('content');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Entry details retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/journal/entries/{{entry_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "journal",
+                        "entries",
+                        "{{entry_id}}",
+                        ""
+                    ]
+                },
+                "description": "Get specific journal entry"
+            },
+            "response": []
+        },
+        {
+            "name": "4. Filter Entries by Type",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Filtered entries returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Filtered entries retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/journal/entries/?entry_type=planting",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "journal",
+                        "entries",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "entry_type",
+                            "value": "planting"
+                        }
+                    ]
+                },
+                "description": "Filter entries by type"
+            },
+            "response": []
+        },
+        {
+            "name": "5. Get All Activities",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Activities list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"activity_id\", jsonData[0].id);",
+                            "    console.log(\"✅ Activities retrieved! Count:\", jsonData.length);",
+                            "    console.log(\"   Using activity_id:\", jsonData[0].id);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/journal/activities/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "journal",
+                        "activities",
+                        ""
+                    ]
+                },
+                "description": "Get all field activities"
+            },
+            "response": []
+        },
+        {
+            "name": "6. Create Field Activity",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Activity created\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('id');",
+                            "    pm.expect(jsonData.activity_type).to.eql('weeding');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"activity_id\", jsonData.id);",
+                            "console.log(\"✅ Activity created! ID:\", jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"activity_date\": \"2024-12-02\",\n    \"activity_type\": \"weeding\",\n    \"crop_name\": \"Maize\",\n    \"field_section\": \"North Field\",\n    \"description\": \"Manual weeding of maize field\",\n    \"cost\": 3000,\n    \"labor_hours\": 6,\n    \"workers_count\": 3\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/journal/activities/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "journal",
+                        "activities",
+                        ""
+                    ]
+                },
+                "description": "Create new field activity"
+            },
+            "response": []
+        },
+        {
+            "name": "7. Get Specific Activity",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Activity details returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('activity_type');",
+                            "    pm.expect(jsonData).to.have.property('description');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Activity details retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/journal/activities/{{activity_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "journal",
+                        "activities",
+                        "{{activity_id}}",
+                        ""
+                    ]
+                },
+                "description": "Get specific field activity"
+            },
+            "response": []
+        },
+        {
+            "name": "8. Get Journal Summary",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Summary data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('total_entries');",
+                            "    pm.expect(jsonData).to.have.property('total_activities');",
+                            "    pm.expect(jsonData).to.have.property('total_activity_cost');",
+                            "    pm.expect(jsonData).to.have.property('total_labor_hours');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Journal summary retrieved!\");",
+                            "console.log(\"   Farm:\", jsonData.farm_name);",
+                            "console.log(\"   Entries:\", jsonData.total_entries);",
+                            "console.log(\"   Activities:\", jsonData.total_activities);",
+                            "console.log(\"   Total Cost: KES\", jsonData.total_activity_cost);",
+                            "console.log(\"   Total Labor:\", jsonData.total_labor_hours, \"hours\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/journal/summary/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "journal",
+                        "summary",
+                        ""
+                    ]
+                },
+                "description": "Get journal statistics summary"
+            },
+            "response": []
+        }
+    ]
+}

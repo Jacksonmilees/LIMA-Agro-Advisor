@@ -1,0 +1,546 @@
+{
+    "info": {
+        "_postman_id": "lima-agronomy-api",
+        "name": "LIMA API - Agronomy Module",
+        "description": "Test collection for LIMA Agronomy API (Crop Guides, Pests, AI Chat)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "crop_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Setup - Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Login successful\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "console.log(\"✅ Logged in. Token saved.\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "1. Get All Crops",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Crops list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"crop_id\", jsonData[0].id);",
+                            "    console.log(\"✅ Crops retrieved! Count:\", jsonData.length);",
+                            "    console.log(\"   First crop:\", jsonData[0].name);",
+                            "    console.log(\"   Using crop_id:\", jsonData[0].id);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/crops/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "crops",
+                        ""
+                    ]
+                },
+                "description": "Get list of all crop guides"
+            },
+            "response": []
+        },
+        {
+            "name": "2. Get Specific Crop Details",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Crop details returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('name');",
+                            "    pm.expect(jsonData).to.have.property('planting_season');",
+                            "    pm.expect(jsonData).to.have.property('fertilizer_recommendation');",
+                            "    pm.expect(jsonData).to.have.property('pests_diseases');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Crop details retrieved:\", jsonData.name);",
+                            "console.log(\"   Scientific name:\", jsonData.scientific_name);",
+                            "console.log(\"   Time to harvest:\", jsonData.time_to_harvest_days, \"days\");",
+                            "console.log(\"   Pests/Diseases:\", jsonData.pests_diseases.length);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/crops/{{crop_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "crops",
+                        "{{crop_id}}",
+                        ""
+                    ]
+                },
+                "description": "Get detailed information for a specific crop"
+            },
+            "response": []
+        },
+        {
+            "name": "3. Get All Pests & Diseases",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Pests list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Pests/Diseases retrieved! Count:\", jsonData.length);",
+                            "if (jsonData.length > 0) {",
+                            "    console.log(\"   Example:\", jsonData[0].name, \"(\", jsonData[0].type_display, \")\");",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/pests/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "pests",
+                        ""
+                    ]
+                },
+                "description": "Get all pests and diseases"
+            },
+            "response": []
+        },
+        {
+            "name": "4. Get Pests for Specific Crop",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Filtered pests returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "",
+                            "    // All returned pests should belong to the filtered crop",
+                            "    if (jsonData.length > 0) {",
+                            "        var crop_id = pm.collectionVariables.get(\"crop_id\");",
+                            "        jsonData.forEach(function(pest) {",
+                            "            pm.expect(pest.crop).to.eql(parseInt(crop_id));",
+                            "        });",
+                            "    }",
+                            "});",
+                            "",
+                            "console.log(\"✅ Filtered pests retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/pests/?crop_id={{crop_id}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "pests",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "crop_id",
+                            "value": "{{crop_id}}"
+                        }
+                    ]
+                },
+                "description": "Get pests and diseases filtered by crop_id"
+            },
+            "response": []
+        },
+        {
+            "name": "5. AI Chat - General Question",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"AI response received\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('query');",
+                            "    pm.expect(jsonData).to.have.property('response');",
+                            "    pm.expect(jsonData.query).to.include('farming');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ AI Chat response received!\");",
+                            "console.log(\"   Query:\", jsonData.query);",
+                            "console.log(\"   Response:\", jsonData.response);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"query\": \"What are the best practices for farming?\",\n    \"context\": \"general\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/chat/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "chat",
+                        ""
+                    ]
+                },
+                "description": "Send a general farming question to AI"
+            },
+            "response": []
+        },
+        {
+            "name": "6. AI Chat - Maize Question",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Maize-related response\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.response).to.match(/maize|Maize/i);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Maize AI response:\");",
+                            "console.log(\"   \", jsonData.response);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"query\": \"How do I plant maize successfully?\",\n    \"context\": \"crop_advice\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/chat/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "chat",
+                        ""
+                    ]
+                },
+                "description": "Ask AI about maize cultivation"
+            },
+            "response": []
+        },
+        {
+            "name": "7. AI Chat - Pest Question",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Pest-related response\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.response).to.match(/pest|Pest|control/i);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Pest AI response received\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"query\": \"I see pests on my crops, what should I do?\",\n    \"context\": \"pest_id\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/chat/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "chat",
+                        ""
+                    ]
+                },
+                "description": "Ask AI about pest control"
+            },
+            "response": []
+        },
+        {
+            "name": "8. AI Chat - Water Question",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Water/irrigation response\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.response).to.match(/water|irrigation|moisture/i);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Water AI response received\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"query\": \"How often should I water my crops?\",\n    \"context\": \"general\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/chat/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "chat",
+                        ""
+                    ]
+                },
+                "description": "Ask AI about irrigation"
+            },
+            "response": []
+        },
+        {
+            "name": "9. Get Chat History",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Chat history returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    pm.expect(jsonData.length).to.be.at.least(1);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Chat history retrieved!\");",
+                            "console.log(\"   Total conversations:\", jsonData.length);",
+                            "if (jsonData.length > 0) {",
+                            "    console.log(\"   Latest query:\", jsonData[0].query);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/agronomy/history/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "agronomy",
+                        "history",
+                        ""
+                    ]
+                },
+                "description": "Get user's AI chat history"
+            },
+            "response": []
+        }
+    ]
+}

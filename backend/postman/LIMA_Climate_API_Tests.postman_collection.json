@@ -1,0 +1,646 @@
+{
+    "info": {
+        "_postman_id": "lima-climate-api",
+        "name": "LIMA API - Climate Module",
+        "description": "Test collection for LIMA Climate API (Weather, NDVI, Risk Assessment, Alerts)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "ndvi_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Setup - Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Login successful\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "console.log(\"✅ Logged in. Token saved.\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "1. Get Weather Forecast",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Forecast data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('location');",
+                            "    pm.expect(jsonData).to.have.property('forecasts');",
+                            "    pm.expect(jsonData.forecasts).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Weather forecast retrieved!\");",
+                            "console.log(\"   Location:\", jsonData.location);",
+                            "console.log(\"   Forecasts:\", jsonData.forecasts.length, \"days\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/weather/forecast/?days=7",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "weather",
+                        "forecast",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "days",
+                            "value": "7"
+                        }
+                    ]
+                },
+                "description": "Get 7-day weather forecast for farm location"
+            },
+            "response": []
+        },
+        {
+            "name": "2. Get NDVI Data",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"NDVI list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "// Save first NDVI ID if exists",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0) {",
+                            "    pm.collectionVariables.set(\"ndvi_id\", jsonData[0].id);",
+                            "    console.log(\"✅ NDVI data retrieved! Using ID:\", jsonData[0].id);",
+                            "    console.log(\"   Latest NDVI:\", jsonData[0].ndvi_value);",
+                            "    console.log(\"   Health status:\", jsonData[0].health_status_display);",
+                            "} else {",
+                            "    console.log(\"⚠️ No NDVI data found\");",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/ndvi/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "ndvi",
+                        ""
+                    ]
+                },
+                "description": "Get NDVI crop health data for farm"
+            },
+            "response": []
+        },
+        {
+            "name": "3. Create NDVI Measurement",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"NDVI created with auto health status\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.ndvi_value).to.eql('0.650');",
+                            "    pm.expect(jsonData).to.have.property('health_status');",
+                            "    pm.expect(jsonData.health_status).to.eql('excellent');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"ndvi_id\", jsonData.id);",
+                            "console.log(\"✅ NDVI measurement created! ID:\", jsonData.id);",
+                            "console.log(\"   NDVI:\", jsonData.ndvi_value, \"=\", jsonData.health_status_display);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"ndvi_value\": 0.65,\n    \"image_date\": \"2025-12-01\",\n    \"source\": \"sentinel\",\n    \"cloud_cover_percent\": 5\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/ndvi/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "ndvi",
+                        ""
+                    ]
+                },
+                "description": "Add new NDVI measurement (health status auto-calculated)"
+            },
+            "response": []
+        },
+        {
+            "name": "4. Get Specific NDVI",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"NDVI details returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('ndvi_value');",
+                            "    pm.expect(jsonData).to.have.property('health_status');",
+                            "});",
+                            "",
+                            "console.log(\"✅ NDVI details retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/ndvi/{{ndvi_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "ndvi",
+                        "{{ndvi_id}}",
+                        ""
+                    ]
+                },
+                "description": "Get specific NDVI measurement"
+            },
+            "response": []
+        },
+        {
+            "name": "5. Update NDVI",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"NDVI updated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.cloud_cover_percent).to.eql(10);",
+                            "});",
+                            "",
+                            "console.log(\"✅ NDVI updated!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"cloud_cover_percent\": 10\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/ndvi/{{ndvi_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "ndvi",
+                        "{{ndvi_id}}",
+                        ""
+                    ]
+                },
+                "description": "Update NDVI measurement"
+            },
+            "response": []
+        },
+        {
+            "name": "6. Generate Risk Assessment",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Risk assessment generated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('drought_risk');",
+                            "    pm.expect(jsonData).to.have.property('flood_risk');",
+                            "    pm.expect(jsonData).to.have.property('extreme_temp_risk');",
+                            "    pm.expect(jsonData).to.have.property('overall_risk_level');",
+                            "    pm.expect(jsonData).to.have.property('recommendations');",
+                            "});",
+                            "",
+                            "pm.test(\"Risk scores in valid range\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.drought_risk).to.be.within(0, 100);",
+                            "    pm.expect(jsonData.flood_risk).to.be.within(0, 100);",
+                            "    pm.expect(jsonData.extreme_temp_risk).to.be.within(0, 100);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Risk assessment generated!\");",
+                            "console.log(\"   Overall Risk:\", jsonData.overall_risk_display);",
+                            "console.log(\"   Drought:\", jsonData.drought_risk);",
+                            "console.log(\"   Flood:\", jsonData.flood_risk);",
+                            "console.log(\"   Temp:\", jsonData.extreme_temp_risk);",
+                            "console.log(\"   Confidence:\", jsonData.confidence + \"%\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/risk-assessment/?days_ahead=30",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "risk-assessment",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "days_ahead",
+                            "value": "30"
+                        }
+                    ]
+                },
+                "description": "Generate automated climate risk assessment (drought, flood, temperature)"
+            },
+            "response": []
+        },
+        {
+            "name": "7. Get Risk History",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Risk list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    pm.expect(jsonData.length).to.be.greaterThan(0);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Risk history retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/risks/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "risks",
+                        ""
+                    ]
+                },
+                "description": "Get all risk assessments for farm"
+            },
+            "response": []
+        },
+        {
+            "name": "8. Get Weather Alerts",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Alerts list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Weather alerts retrieved!\");",
+                            "if (jsonData.length > 0) {",
+                            "    console.log(\"   Alerts:\", jsonData.length);",
+                            "    console.log(\"   Latest:\", jsonData[0].title);",
+                            "}"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/alerts/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "alerts",
+                        ""
+                    ]
+                },
+                "description": "Get weather alerts for user"
+            },
+            "response": []
+        },
+        {
+            "name": "9. Get Unread Alerts",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Unread alerts filtered\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    jsonData.forEach(function(alert) {",
+                            "        pm.expect(alert.is_read).to.be.false;",
+                            "    });",
+                            "});",
+                            "",
+                            "console.log(\"✅ Unread alerts filtered!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/alerts/?is_read=false",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "alerts",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "is_read",
+                            "value": "false"
+                        }
+                    ]
+                },
+                "description": "Get only unread weather alerts"
+            },
+            "response": []
+        },
+        {
+            "name": "10. Get Climate Analytics",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Analytics data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('farm_name');",
+                            "    pm.expect(jsonData).to.have.property('avg_temperature');",
+                            "    pm.expect(jsonData).to.have.property('total_rainfall');",
+                            "    pm.expect(jsonData).to.have.property('avg_ndvi');",
+                            "    pm.expect(jsonData).to.have.property('current_risk_level');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Climate analytics retrieved!\");",
+                            "console.log(\"   Period:\", jsonData.period_start, \"to\", jsonData.period_end);",
+                            "console.log(\"   Avg Temp:\", jsonData.avg_temperature, \"°C\");",
+                            "console.log(\"   Rainfall:\", jsonData.total_rainfall, \"mm\");",
+                            "console.log(\"   NDVI:\", jsonData.avg_ndvi, \"(\", jsonData.latest_health_status, \")\");",
+                            "console.log(\"   Risk:\", jsonData.current_risk_level);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/analytics/?days=30",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "analytics",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "days",
+                            "value": "30"
+                        }
+                    ]
+                },
+                "description": "Get comprehensive climate analytics (weather, NDVI, risks)"
+            },
+            "response": []
+        },
+        {
+            "name": "11. Delete NDVI",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 204\", function () {",
+                            "    pm.response.to.have.status(204);",
+                            "});",
+                            "",
+                            "console.log(\"✅ NDVI deleted!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/climate/ndvi/{{ndvi_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "climate",
+                        "ndvi",
+                        "{{ndvi_id}}",
+                        ""
+                    ]
+                },
+                "description": "Delete NDVI measurement"
+            },
+            "response": []
+        }
+    ]
+}

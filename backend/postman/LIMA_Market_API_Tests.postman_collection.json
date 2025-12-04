@@ -1,0 +1,660 @@
+{
+    "info": {
+        "_postman_id": "lima-market-api",
+        "name": "LIMA API - Market Module",
+        "description": "Test collection for LIMA Market API (Prices, Trends, Forecasts, Alerts)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "default"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "alert_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Setup - Login",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Login successful\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"access_token\", jsonData.access);",
+                            "console.log(\"✅ Logged in. Token saved.\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "auth": {
+                    "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"email\": \"farmer1@lima.com\",\n    \"password\": \"SecurePassword123!\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/auth/login/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "auth",
+                        "login",
+                        ""
+                    ]
+                }
+            },
+            "response": []
+        },
+        {
+            "name": "1. Get All Market Prices",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Price list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    pm.expect(jsonData.length).to.be.greaterThan(0);",
+                            "});",
+                            "",
+                            "pm.test(\"Price has required fields\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    if (jsonData.length > 0) {",
+                            "        pm.expect(jsonData[0]).to.have.property('crop');",
+                            "        pm.expect(jsonData[0]).to.have.property('price_per_kg');",
+                            "        pm.expect(jsonData[0]).to.have.property('market');",
+                            "        pm.expect(jsonData[0]).to.have.property('date');",
+                            "    }",
+                            "});",
+                            "",
+                            "console.log(\"✅ Market prices retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/prices/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "prices",
+                        ""
+                    ]
+                },
+                "description": "Get all market prices (default: last 30 days)"
+            },
+            "response": []
+        },
+        {
+            "name": "2. Get Prices for Specific Crop",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Filtered prices returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    if (jsonData.length > 0) {",
+                            "        pm.expect(jsonData[0].crop).to.eql('Maize');",
+                            "    }",
+                            "});",
+                            "",
+                            "console.log(\"✅ Filtered prices retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/prices/?crop=Maize",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "prices",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "crop",
+                            "value": "Maize"
+                        }
+                    ]
+                },
+                "description": "Filter prices by crop"
+            },
+            "response": []
+        },
+        {
+            "name": "3. Get Latest Prices",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Latest prices returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    pm.expect(jsonData.length).to.be.greaterThan(0);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Latest prices retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/prices/latest/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "prices",
+                        "latest",
+                        ""
+                    ]
+                },
+                "description": "Get latest price for each crop"
+            },
+            "response": []
+        },
+        {
+            "name": "4. Get Price Trend (Maize)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Trend data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('crop');",
+                            "    pm.expect(jsonData).to.have.property('trend');",
+                            "    pm.expect(jsonData).to.have.property('average_price');",
+                            "    pm.expect(jsonData).to.have.property('prices');",
+                            "    pm.expect(jsonData.prices).to.be.an('array');",
+                            "});",
+                            "",
+                            "pm.test(\"Trend is valid\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(['rising', 'falling', 'stable']).to.include(jsonData.trend);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Price trend:\", jsonData.trend);",
+                            "console.log(\"   Average:\", jsonData.average_price);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/prices/trend/?crop=Maize&days=30",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "prices",
+                        "trend",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "crop",
+                            "value": "Maize"
+                        },
+                        {
+                            "key": "days",
+                            "value": "30"
+                        }
+                    ]
+                },
+                "description": "Get price trend analysis for Maize over 30 days"
+            },
+            "response": []
+        },
+        {
+            "name": "5. Create Price Alert",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {",
+                            "    pm.response.to.have.status(201);",
+                            "});",
+                            "",
+                            "pm.test(\"Alert created\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.crop).to.eql('Maize');",
+                            "    pm.expect(jsonData.target_price).to.eql('50.00');",
+                            "    pm.expect(jsonData.is_active).to.be.true;",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "pm.collectionVariables.set(\"alert_id\", jsonData.id);",
+                            "console.log(\"✅ Price alert created! ID:\", jsonData.id);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"crop\": \"Maize\",\n    \"target_price\": 50,\n    \"market\": \"national\",\n    \"notify_email\": true,\n    \"notify_sms\": false\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/alerts/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "alerts",
+                        ""
+                    ]
+                },
+                "description": "Create a new price alert"
+            },
+            "response": []
+        },
+        {
+            "name": "6. Get All Price Alerts",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Alert list returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.be.an('array');",
+                            "    pm.expect(jsonData.length).to.be.greaterThan(0);",
+                            "});",
+                            "",
+                            "// Save first alert ID if not already set",
+                            "var jsonData = pm.response.json();",
+                            "if (jsonData.length > 0 && !pm.collectionVariables.get(\"alert_id\")) {",
+                            "    pm.collectionVariables.set(\"alert_id\", jsonData[0].id);",
+                            "}",
+                            "",
+                            "console.log(\"✅ Price alerts retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/alerts/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "alerts",
+                        ""
+                    ]
+                },
+                "description": "Get all user price alerts"
+            },
+            "response": []
+        },
+        {
+            "name": "7. Get Specific Alert",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Alert details returned\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('crop');",
+                            "    pm.expect(jsonData).to.have.property('target_price');",
+                            "    pm.expect(jsonData).to.have.property('current_price');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Alert details retrieved!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/alerts/{{alert_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "alerts",
+                        "{{alert_id}}",
+                        ""
+                    ]
+                },
+                "description": "Get specific alert details with current price"
+            },
+            "response": []
+        },
+        {
+            "name": "8. Update Alert",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Alert updated\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.target_price).to.eql('55.00');",
+                            "});",
+                            "",
+                            "console.log(\"✅ Alert updated!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"target_price\": 55\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/alerts/{{alert_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "alerts",
+                        "{{alert_id}}",
+                        ""
+                    ]
+                },
+                "description": "Update price alert target"
+            },
+            "response": []
+        },
+        {
+            "name": "9. Get Price Forecast (7 days)",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Forecast data present\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('crop');",
+                            "    pm.expect(jsonData).to.have.property('forecasts');",
+                            "    pm.expect(jsonData.forecasts).to.be.an('array');",
+                            "    pm.expect(jsonData.forecasts).to.have.lengthOf(7);",
+                            "});",
+                            "",
+                            "pm.test(\"Forecast has confidence scores\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData.forecasts[0]).to.have.property('confidence');",
+                            "    pm.expect(jsonData.forecasts[0]).to.have.property('predicted_price');",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Forecast generated for\", jsonData.forecasts.length, \"days\");",
+                            "console.log(\"   First forecast:\", jsonData.forecasts[0].predicted_price, \"KES\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/forecast/?crop=Maize&days=7",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "forecast",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "crop",
+                            "value": "Maize"
+                        },
+                        {
+                            "key": "days",
+                            "value": "7"
+                        }
+                    ]
+                },
+                "description": "Get 7-day price forecast for Maize"
+            },
+            "response": []
+        },
+        {
+            "name": "10. Get Best Time to Sell",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {",
+                            "    pm.response.to.have.status(200);",
+                            "});",
+                            "",
+                            "pm.test(\"Recommendation provided\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(jsonData).to.have.property('recommendation');",
+                            "    pm.expect(jsonData).to.have.property('reason');",
+                            "    pm.expect(jsonData).to.have.property('confidence');",
+                            "    pm.expect(jsonData).to.have.property('current_price');",
+                            "});",
+                            "",
+                            "pm.test(\"Recommendation is valid\", function () {",
+                            "    var jsonData = pm.response.json();",
+                            "    pm.expect(['sell_now', 'wait']).to.include(jsonData.recommendation);",
+                            "});",
+                            "",
+                            "var jsonData = pm.response.json();",
+                            "console.log(\"✅ Recommendation:\", jsonData.recommendation);",
+                            "console.log(\"   Reason:\", jsonData.reason);",
+                            "console.log(\"   Confidence:\", jsonData.confidence);"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/best-time-to-sell/?crop=Maize",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "best-time-to-sell",
+                        ""
+                    ],
+                    "query": [
+                        {
+                            "key": "crop",
+                            "value": "Maize"
+                        }
+                    ]
+                },
+                "description": "Get AI recommendation on best time to sell"
+            },
+            "response": []
+        },
+        {
+            "name": "11. Delete Price Alert",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "exec": [
+                            "pm.test(\"Status code is 204\", function () {",
+                            "    pm.response.to.have.status(204);",
+                            "});",
+                            "",
+                            "console.log(\"✅ Alert deleted!\");"
+                        ],
+                        "type": "text/javascript"
+                    }
+                }
+            ],
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/market/alerts/{{alert_id}}/",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "market",
+                        "alerts",
+                        "{{alert_id}}",
+                        ""
+                    ]
+                },
+                "description": "Delete a price alert"
+            },
+            "response": []
+        }
+    ]
+}
